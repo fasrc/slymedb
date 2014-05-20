@@ -57,6 +57,11 @@ class Store(object):
         """
         self.metadata.create_all(checkfirst=True)
         
+    def drop(self):
+        """
+        Drop the database table
+        """
+        self.metadata.drop_all(checkfirst=True)
     
     def fetch(self,**kwargs):
         """

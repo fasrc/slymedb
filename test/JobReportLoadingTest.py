@@ -6,6 +6,7 @@ Created on May 19, 2014
 import unittest
 from slyme import JobReport
 from slymedb import Store
+import os
 
 class FakeRunSh:
     """
@@ -57,8 +58,13 @@ class Test(unittest.TestCase):
         currentrunsh = FakeRunSh(text)        
         jobreports = JobReport.fetch(execfunc = currentrunsh.runsh_i)
         
+        connectstring = os.environ.get('SLYMEDB_TEST_CONNECT_STRING')
+        if not connectstring:
+            raise Exception("SLYMEDB_TEST_CONNECT_STRING must be set for testing")
+        
         # Create database
-        store = Store('fixme')
+        store = Store(connectstring)
+        store.drop()
         store.create()
         
         store.save(jobreports)
