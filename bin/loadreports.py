@@ -73,7 +73,9 @@ def main(): # IGNORE:C0111
     jrs = JobReport.fetch(**sacctparams)
     count = 0
     for jr in jrs:
-        store.save(jr)
+        if jr is None:
+	    raise Exception("Job report is null")
+        store.save([jr])
         count += 1
         if count % 100 == 0:
             sys.stderr.write("Loaded %d job reports\n" % count)
