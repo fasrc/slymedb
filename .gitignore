@@ -2,3 +2,6 @@
 .pydevproject
 *.pyc
 .settings*
+MANIFEST
+*.egg-info
+dist/*

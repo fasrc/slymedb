@@ -33,6 +33,8 @@ def main(): # IGNORE:C0111
     parser.add_argument("--host",help="Database hostname",default='localhost')
     parser.add_argument("-d","--database",help="Database",required=True)
     parser.add_argument("--drop-tables",action="store_true",help="If tables exist, drop them first")
+    parser.add_argument("--since-last-entry",action="store_true",\
+        help="Set starttime parameter to just above the latest Start value")
     parser.add_argument("--sacct-parameters",
         help="Comma-separated list of sacct parameters, e.g. \
               --sacct-parameters=\"user=akitzmiller,starttime=2014-05-01\"")
@@ -69,12 +71,23 @@ def main(): # IGNORE:C0111
                 sacctparams[kv[0]] = True
             else:
                 raise Exception("Can't parse sacct parameter %s" % param)
+            
+    # Find max(Start) in the database and set starttime to Start + 1
+    # If there is no table or value do nothing
+    if args.since_last_entry:
+        try:
+            result = store.connection.execute("select max(Start) as maxstart from jobreport")
+            row = result.next()
+            maxstart = row["maxstart"]
+            sacctparams["starttime"] = maxstart
+        except Exception, e:
+            sys.stderr.write("Error getting max Start.  No starttime will be set \
+               %s\n" % e.message)
+            pass
                             
     jrs = JobReport.fetch(**sacctparams)
     count = 0
     for jr in jrs:
-        if jr is None:
-	    raise Exception("Job report is null")
         store.save([jr])
         count += 1
         if count % 100 == 0:
