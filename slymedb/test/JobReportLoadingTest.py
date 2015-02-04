@@ -34,6 +34,25 @@ class Test(unittest.TestCase):
 
     def tearDown(self):
         pass
+    
+    def testJobWithPipes(self):
+        text="""
+"11508264|lassance|samtools view IMR_PO_051214.bam | awk '{print }' | sort -u -z > regions|FAILED|interact|1|1|00:00:38|00:00.006|00:00.001|00:00.004|2000Mn|2576K|2014-06-11T11:33:55|2014-06-11T11:34:33|holy2a18205|00:00:38\n"        
+        """
+        # Generate job reports
+        currentrunsh = FakeRunSh(text)        
+        jobreports = JobReport.fetch(execfunc = currentrunsh.runsh_i)
+        
+        connectstring = os.environ.get('SLYMEDB_TEST_CONNECT_STRING')
+        if not connectstring:
+            raise Exception("SLYMEDB_TEST_CONNECT_STRING must be set for testing")
+        
+        # Create database
+        store = Store(connectstring)
+        store.drop()
+        store.create()
+        
+        store.save(jobreports)
 
 
     def testJobReportLoading(self):

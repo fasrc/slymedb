@@ -6,16 +6,17 @@ Copyright (c) 2014
 Harvard FAS Research Computing
 All rights reserved.
 
-
+BOOT_FAIL,CANCELLED,COMPLETED,FAILED,NODE_FAIL,PREEMPTED,TIMEOUT
 Created on May 6, 2014
 
 @author: Aaron Kitzmiller
 """
 
-import sys
-import os
+import sys, os
+import datetime
+from time import sleep
 import getpass
-from slyme import JobReport
+from slyme import JobReport, Slurm
 from slymedb import Store
 
 from argparse import ArgumentParser
@@ -36,8 +37,8 @@ def main(): # IGNORE:C0111
     parser.add_argument("--since-last-entry",action="store_true",\
         help="Set starttime parameter to just above the latest Start value")
     parser.add_argument("--sacct-parameters",
-        help="Comma-separated list of sacct parameters, e.g. \
-              --sacct-parameters=\"user=akitzmiller,starttime=2014-05-01\"")
+        help="Pipe-separated list of sacct parameters, e.g. \
+              --sacct-parameters=\"user=akitzmiller|starttime=2014-05-01\"")
     
     # Process arguments
     args = parser.parse_args()
@@ -62,7 +63,7 @@ def main(): # IGNORE:C0111
     # Parse the sacct parameters into a dict
     sacctparams = {}
     if args.sacct_parameters is not None:
-        paramlist = args.sacct_parameters.split(',')
+        paramlist = args.sacct_parameters.split('|')
         for param in paramlist:
             kv = param.split('=')
             if len(kv) == 2:
@@ -74,25 +75,52 @@ def main(): # IGNORE:C0111
             
     # Find max(Start) in the database and set starttime to Start + 1
     # If there is no table or value do nothing
+    count = 0
     if args.since_last_entry:
         try:
             result = store.connection.execute("select max(Start) as maxstart from jobreport")
-            row = result.next()
+            row = result.first()
             maxstart = row["maxstart"]
-            sacctparams["starttime"] = maxstart
+            
+            startdate = maxstart + datetime.timedelta(days=1)
+            enddate = startdate + datetime.timedelta(days=1)
         except Exception, e:
             sys.stderr.write("Error getting max Start.  No starttime will be set \
                %s\n" % e.message)
-            pass
-                            
-    jrs = JobReport.fetch(**sacctparams)
-    count = 0
-    for jr in jrs:
-        store.save([jr])
-        count += 1
-        if count % 100 == 0:
-            sys.stderr.write("Loaded %d job reports\n" % count)
-    
+            exit(1)
+            
+        # One day at a time, Sweet Jesus
+        while enddate < datetime.datetime.today():
+            sacctparams["starttime"] = str(startdate)
+            sacctparams["endtime"] = str(enddate)
+            sys.stderr.write("--starttime %s, --endtime %s\n" % (sacctparams['starttime'],sacctparams['endtime']))
+            jrs = Slurm.getJobReports(**sacctparams)
+            for jr in jrs:
+                try:
+                    store.save([jr])
+                    count += 1
+                    if count % 100 == 0:
+                        sys.stderr.write("Loaded %d job reports\n" % count)
+                except Exception as e:
+                    sys.stderr.write("Error saving jobreport %s\n" % e)
+            sys.stderr.write("Loaded %d\n" % count)
+                    
+            startdate = startdate +  datetime.timedelta(days=1)
+            enddate = enddate +  datetime.timedelta(days=1)
+            sleep(30)
+        
+    else:                      
+        jrs = Slurm.getJobReports(**sacctparams)
+        for jr in jrs:
+            try:
+                store.save([jr])
+                sys.stderr.write("Loaded %s\n" % jr.JobID)
+                count += 1
+                if count % 100 == 0:
+                    sys.stderr.write("Loaded %d job reports\n" % count)
+            except Exception as e:
+                sys.stderr.write("Error saving jobreport %s\n" % e)
+        
     sys.stderr.write("Finished loading %d job reports\n" % count)
     return 0
 #     except KeyboardInterrupt:
