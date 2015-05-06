@@ -82,7 +82,7 @@ def main(): # IGNORE:C0111
             row = result.first()
             maxstart = row["maxstart"]
             
-            startdate = maxstart + datetime.timedelta(days=1)
+            startdate = maxstart + datetime.timedelta(days=-1)
             enddate = startdate + datetime.timedelta(days=1)
         except Exception, e:
             sys.stderr.write("Error getting max Start.  No starttime will be set \
