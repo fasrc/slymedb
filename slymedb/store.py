@@ -3,10 +3,11 @@ Created on May 19, 2014
 
 @author: aaronkitzmiller
 '''
-
+import re
 from sqlalchemy.engine import create_engine
 from sqlalchemy import MetaData, Column, Table, types
 from sqlalchemy.dialects import mysql
+from sqlalchemy.orm import sessionmaker
 
 
 class Store(object):
@@ -19,8 +20,12 @@ class Store(object):
         """
         Create the engine and connection.  Define the jobreport table
         """       
+        # configure Session class with desired options
         self.engine = create_engine(connectstring)
-        
+        Session = sessionmaker(bind=self.engine)
+
+        # work with the session
+        self.session = Session()
         self.metadata = MetaData()
         
         self.jobreport_table = Table('jobreport', self.metadata, 
@@ -94,20 +99,26 @@ class Store(object):
         """
         pass
     
-    def save(self,jobreports):
+    def save(self,jobreports,replace=True):
         """
         Store an array of JobReport objects.  Only stores the attributes 
         represented by columns; there can be others that are ignored.
+        If replace is rTrue, then an integrity error results in an
+        update.
         """
-        
+        errorre = re.compile(r'Duplicate entry|UNIQUE constraint failed')
         for jobreport in jobreports:
             vals = {c.name:jobreport[c.name] for c in self.jobreport_table.columns}
             try: 
                 insert = self.jobreport_table.insert(values=vals)
                 self.connection.execute(insert)
-            catch Exception, e:
-                insert = self.rejected_table.insert(values=vals)
-                self.connection.execute(insert)    
+            except Exception, e:
+                match = errorre.search(str(e))
+                if match is not None:
+                    update = self.jobreport_table.update().where(self.jobreport_table.c.JobID == jobreport["JobID"]).values(vals)
+                    self.connection.execute(update)
+                else:
+                    raise e 
             
     
     

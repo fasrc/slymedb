@@ -20,6 +20,7 @@ setup(
     url='http://pypi.python.org/pypi/slymedb/',
     packages = find_packages(),
     long_description=open('README.txt').read(),
+    scripts = ['bin/loadreports.py'],
     install_requires=[
         "SQLAlchemy > 0.9.0",
         "slyme >= 0.1.0"

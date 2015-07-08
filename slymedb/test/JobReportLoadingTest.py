@@ -4,9 +4,16 @@ Created on May 19, 2014
 @author: aaronkitzmiller
 '''
 import unittest
+import os, re
 from slyme import Slurm, JobReport
 from slymedb import Store
-import os
+
+"""
+Job report text is pipe separated values of the following fields:
+
+JobID|User|JobName|State|Partition|NCPUS|NNodes|CPUTime|TotalCPU|UserCPU|SystemCPU|ReqMem|MaxRSS|Start|End|NodeList|Elapsed
+
+"""
 
 class FakeRunSh:
     """
@@ -34,6 +41,63 @@ class Test(unittest.TestCase):
 
     def tearDown(self):
         pass
+    
+    def testReplaceJob(self):
+        """
+        If a job id is seen a second time, it should replace the existing one
+        """
+        jobid = "10048462"
+        oldcputime = "02:08:33"
+        newcputime = "03:00:00"
+        text="\
+%s|akitzmiller|bash|COMPLETED|interact|1|1|%s|08:01.433|06:47.955|01:13.477|2000Mn|2409232K|2014-05-01T11:43:26|2014-05-01T13:51:59|holy2a18206|00:00:10\
+        " % (jobid,oldcputime)
+        replacement="\
+%s|akitzmiller|bash|COMPLETED|interact|1|1|%s|08:01.433|06:47.955|01:13.477|2000Mn|2409232K|2014-05-01T11:43:26|2014-05-01T13:51:59|holy2a18206|00:00:10\
+        " % (jobid,newcputime)
+        text = re.sub(r'\s+', '', text)
+        replacement = re.sub(r'\s+','', replacement)
+        
+        currentrunsh = FakeRunSh(text)
+        jobreports = Slurm.getJobReports(execfunc = currentrunsh.runsh_i)
+        
+        connectstring = os.environ.get('SLYMEDB_TEST_CONNECT_STRING')
+        if not connectstring:
+            raise Exception("SLYMEDB_TEST_CONNECT_STRING must be set for testing")
+        
+        # Create database
+        store = Store(connectstring)
+        store.drop()
+        store.create()
+        
+        jrtable = store.jobreport_table
+        
+        # Store the job report
+        store.save(jobreports)
+        
+        # Read it back out
+        select = jrtable.select().where(jrtable.c.JobID == jobid)
+        results = select.execute()
+        row = results.fetchone()
+        # Cputime matches jobid
+        self.assertTrue(row[0] == jobid)
+        self.assertTrue(row[7] == Slurm.slurm_time_interval_to_seconds(oldcputime), "Time is %s" % str( Slurm.slurm_time_interval_to_seconds(oldcputime)))
+        
+        # Save a replacement
+        currentrunsh = FakeRunSh(replacement)
+        jobreports = Slurm.getJobReports(execfunc = currentrunsh.runsh_i)
+        store.save(jobreports)
+        # Read it back out
+        select = jrtable.select().where(jrtable.c.JobID == jobid)
+        results = select.execute()
+        row = results.fetchone()
+        self.assertTrue(row[0] == jobid)
+        self.assertTrue(row[7] == Slurm.slurm_time_interval_to_seconds(newcputime), "Time is %s" % str( Slurm.slurm_time_interval_to_seconds(newcputime)))
+        
+        
+        
+        
+
     
     def testJobWithPipes(self):
         text="""
