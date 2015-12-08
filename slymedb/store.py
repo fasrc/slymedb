@@ -41,9 +41,11 @@ class Store(object):
             Column('UserCPU',    types.Float),
             Column('SystemCPU',  types.Float),
             Column('MaxRSS_kB',  types.BigInteger),
+            Column('MaxRSS_MB',  types.BigInteger),
             Column('ReqMem_bytes_per_node',  types.BigInteger),
             Column('ReqMem_bytes_per_core',  types.BigInteger),
             Column('ReqMem_bytes',           types.BigInteger),
+            Column('ReqMem_MB_total',           types.BigInteger),
             Column('Start',      types.DateTime),
             Column('End',        types.DateTime),
             Column('NodeList',   types.String(255)),
@@ -66,9 +68,11 @@ class Store(object):
             Column('UserCPU',    types.Float),
             Column('SystemCPU',  types.Float),
             Column('MaxRSS_kB',  types.BigInteger),
+            Column('MaxRSS_MB',  types.BigInteger),
             Column('ReqMem_bytes_per_node',  types.BigInteger),
             Column('ReqMem_bytes_per_core',  types.BigInteger),
             Column('ReqMem_bytes',           types.BigInteger),
+            Column('ReqMem_MB_total',           types.BigInteger),
             Column('Start',      types.DateTime),
             Column('End',        types.DateTime),
             Column('NodeList',   types.String(255)),
@@ -108,7 +112,7 @@ class Store(object):
         """
         errorre = re.compile(r'Duplicate entry|UNIQUE constraint failed')
         for jobreport in jobreports:
-            vals = {c.name:jobreport[c.name] for c in self.jobreport_table.columns}
+            vals = { c.name:jobreport[c.name] for c in self.jobreport_table.columns }
             try: 
                 insert = self.jobreport_table.insert(values=vals)
                 self.connection.execute(insert)

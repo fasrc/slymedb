@@ -94,9 +94,6 @@ class Test(unittest.TestCase):
         self.assertTrue(row[0] == jobid)
         self.assertTrue(row[7] == Slurm.slurm_time_interval_to_seconds(newcputime), "Time is %s" % str( Slurm.slurm_time_interval_to_seconds(newcputime)))
         
-        
-        
-        
 
     
     def testJobWithPipes(self):
@@ -153,7 +150,14 @@ class Test(unittest.TestCase):
         store.save(jobreports)
             
         # Make sure they go in there
-        
+        jrtable = store.jobreport_table
+        select = jrtable.select().where(jrtable.c.JobID == '10102801')
+        results = select.execute()
+        row = results.fetchone()
+        print row.keys()
+        self.assertTrue(row['JobID'] == '10102801')
+        self.assertTrue(row['ReqMem_MB_total'] == 2000)
+        self.assertTrue(row['MaxRSS_MB'] == 26, "MaxRSS_MB is %d" % row['MaxRSS_MB'])
         
         
 
