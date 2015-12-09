@@ -53,6 +53,7 @@ class Store(object):
             Column('CPU_Efficiency',         types.Float),
             Column('CPU_Wasted', types.Float),
             Column('CancelledBy',types.String(20)),
+            Column('Mem_Wasted', types.Integer),
         )
         
         self.rejected_table = Table('rejected', self.metadata, 
@@ -80,6 +81,7 @@ class Store(object):
             Column('CPU_Efficiency',         types.Float),
             Column('CPU_Wasted', types.Float),
             Column('CancelledBy',types.String(20)),
+            Column('Mem_Wasted', types.Integer),
         )
         
         self.metadata.bind = self.engine

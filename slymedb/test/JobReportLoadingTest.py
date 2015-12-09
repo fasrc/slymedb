@@ -130,7 +130,7 @@ class Test(unittest.TestCase):
 10102746.batch||batch|FAILED||1|1|00:00:04|00:00.232|00:00.089|00:00.142|1000Mc|14340K|2014-05-02T11:01:08|2014-05-02T11:01:12|holy2a05206|00:00:10
 10102801|akitzmiller|bash|COMPLETED|interact|1|1|03:24:41|00:18.743|00:08.706|00:10.036|2000Mn|26968K|2014-05-02T11:05:42|2014-05-02T14:30:23|holy2a18206|00:00:10
 10213033|akitzmiller|bash|COMPLETED|interact|1|1|01:27:02|00:03.319|00:01.623|00:01.695|2000Mn|5656K|2014-05-05T14:20:40|2014-05-05T15:47:42|holy2a18208|00:00:10
-10384435|akitzmiller|agalmatest.sbatch|FAILED|general|8|1|00:01:36|00:01.590|00:01.220|00:00.369|30000Mn||2014-05-09T16:01:53|2014-05-09T16:02:05|holy2a04307|00:00:10
+10384435|akitzmiller|agalmatest.sbatch|FAILED|general|8|1|00:01:36|00:01.590|00:01.220|00:00.369|30000Mn|16?|2014-05-09T16:01:53|2014-05-09T16:02:05|holy2a04307|00:00:10
 10384435.batch||batch|FAILED||1|1|00:00:12|00:01.590|00:01.220|00:00.369|30000Mn|7068K|2014-05-09T16:01:53|2014-05-09T16:02:05|holy2a04307|00:00:10
 10703867|akitzmiller|bash|COMPLETED|interact|1|1|00:07:46|00:01.874|00:01.564|00:00.309|1000Mn|33084K|2014-05-14T14:08:31|2014-05-14T14:16:17|holy2a18205|00:00:10
 """        
@@ -158,6 +158,7 @@ class Test(unittest.TestCase):
         self.assertTrue(row['JobID'] == '10102801')
         self.assertTrue(row['ReqMem_MB_total'] == 2000)
         self.assertTrue(row['MaxRSS_MB'] == 26, "MaxRSS_MB is %d" % row['MaxRSS_MB'])
+        self.assertTrue(row['Mem_Wasted'] == 7600, "Mem_Wasted is %d" % row['Mem_Wasted'])
         
         
 
