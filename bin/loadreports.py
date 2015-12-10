@@ -144,7 +144,6 @@ can be used to set the host, database, user, and password information, respectiv
         for jr in jrs:
             try:
                 store.save([jr])
-                sys.stderr.write("Loaded %s\n" % jr.JobID)
                 count += 1
                 if count % 100 == 0:
                     store.session.commit()
