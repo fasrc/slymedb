@@ -54,6 +54,8 @@ class Store(object):
             Column('CPU_Wasted', types.Float),
             Column('CancelledBy',types.String(20)),
             Column('Mem_Wasted', types.Integer),
+            Column('MaxVMSize_MB',  types.BigInteger),
+            Column('AveVMSize_MB',  types.BigInteger),
         )
         
         self.rejected_table = Table('rejected', self.metadata, 
@@ -82,6 +84,8 @@ class Store(object):
             Column('CPU_Wasted', types.Float),
             Column('CancelledBy',types.String(20)),
             Column('Mem_Wasted', types.Integer),
+            Column('MaxVMSize_MB',  types.BigInteger),
+            Column('AveVMSize_MB',  types.BigInteger),
         )
         
         self.metadata.bind = self.engine
